@@ -23,10 +23,11 @@ class Point(object):
 
 class Space(object):
 
-    def __init__(self, points, dist, zero_point):
+    def __init__(self, points, dist, zero_point, JND_threshold=0.0):
         self.points = points
         self.dist = dist
         self.zero = zero_point
+        self.JND_threshold = JND_threshold
 
     def min_dist(self, pt, ls):
         return min(self.dist(pt.value, p2.value) for p2 in ls)
@@ -53,7 +54,8 @@ def generate_CIELab_space(rgb_space=aRGB, axis_stride=0.1):
     lab_points = []
     for row in range(len(rgb_points)):
         lab_points.append(Point(RGB_to_Lab(rgb_space, rgb_points[row, :])))
-    return Space(lab_points, dist, np.zeros(3))
+    # dist is squared euclidean, so JND threshold is 0.23^2
+    return Space(lab_points, dist, np.zeros(3), 0.23**2)
 
 
 class Partition(object):
@@ -65,7 +67,7 @@ class Partition(object):
         self.space = space
         self.temp = temp
         self.conv = conv
-        # TODO: different modes of generation?
+        # TODO: write to / read from file?
         self._generate()
 
     def assign_point(self, pt, label):
@@ -87,8 +89,6 @@ class Partition(object):
         self.remove_point(pt, pt.label)
         self.assign_point(pt, label)
 
-    # TODO: fix this so that when proportion=1.0, the resulting system is
-    # guaranteed to be convex? Or good enough just to have almost always?
     def convexify_region(self, label):
 
         region = self.partition[label]
@@ -96,7 +96,7 @@ class Partition(object):
         # NOTE: sometimes the iterative calls to this method result in a cell of
         # the partition being empty.  We need to pass over it in those cases.  But
         # maybe we also need better logic to prevent this from happening?
-        if len(region) == 0:
+        if len(region) < len(self.space.zero)+1:
             return
 
         # TODO: fix two errors in ConvexHull: (i) tuple index out of range; (ii)
@@ -114,16 +114,6 @@ class Partition(object):
                          if point_in_hull(point.value, convex_hull)
                          and point not in region]
         if len(misclassified) > 0:
-            # NOTE: the current method of choosing which points to move works
-            # much better than the ones commented out below
-            """
-            to_move = np.random.choice(misclassified,
-                                       size=int(self.conv*len(misclassified)),
-                                       replace=False)
-            misclassified.sort(
-                key=lambda point: distance_to_convex_hull(point.value,
-                                                          convex_hull))
-            """
             num_to_move = int(self.conv*len(misclassified))
             misclassified.sort(
                 key=lambda point: self.space.min_dist(point, region))
@@ -134,7 +124,7 @@ class Partition(object):
     def degree_of_convexity_of_cell(self, label):
         # empty regions have "degree" 1.0
         region = self.partition[label]
-        if len(region) == 0:
+        if len(region) < len(self.space.zero)+1:
             return 1.0
 
         convex_hull = scipy.spatial.ConvexHull([point.value for point in region])
@@ -154,6 +144,7 @@ class Partition(object):
         points = self.space.points
         unlabeled = range(len(points))
         min_dist = self.space.min_dist
+        labels = self.labels
 
         # initialize with one seed point for each label
         seeds = random.sample(unlabeled, len(labels))
@@ -167,20 +158,26 @@ class Partition(object):
             to_add = points[new_idx]
 
             # choose cell based on how close it is to the other cells
-            # TODO: parameterize the f in f(min_dist(pt, label))?
-            weights = [1 / min_dist(to_add, self.partition[label])**0.125 for label in labels]
-            # weights = [1 / self.space.dist(to_add.value, self.centroids[label]) for label in labels]
-            probs = softmax(weights, self.temp)
-            cell = np.random.choice(labels, p=probs)
+            dists = [min_dist(to_add, self.partition[label])
+                     for label in labels]
+            below_JND = np.where(dists < self.space.JND_threshold)[0]
+            if len(below_JND) > 0:
+                print 'below JND'
+                cell = labels[np.random.choice(below_JND)]
+            else:
+                # TODO: parameterize the f in f(min_dist(pt, label))?
+                norm_dists = dists / max(dists)
+                weights = -np.array(norm_dists)
+                probs = softmax(weights, self.temp)
+                cell = np.random.choice(labels, p=probs)
 
             # add both to partition and labels array
             self.assign_point(to_add, cell)
-
             # mark as labeled
             unlabeled.remove(new_idx)
 
         if self.conv:
-
+            print 'Convexifying...'
             # iterate through labels, starting with smallest, so that they are less
             # likely to get gobbled up in the convexify-ing process
             sorted_labels = sorted(labels,
@@ -252,8 +249,32 @@ def partition_to_img(partition):
 
 if __name__ == '__main__':
 
-    #AXES = [(0, 40, 1), (0, 40, 1)]
-    AXES = [(0, 12, 1), (0, 12, 1), (0, 12, 1)]
+    """
+    space = generate_CIELab_space(axis_stride=0.1)
+    print len(space.points)
+    labels = range(7)
+    for idx in range(4):
+        partition = Partition(space, labels, temp=0.0005, conv=1.0)
+        print partition.degree_of_convexity()
+        xs, ys, zs, color = [], [], [], []
+        part = partition.partition
+        for label in part:
+            print len(part[label])
+            for point in part[label]:
+                xs.append(point.value[0])
+                ys.append(point.value[1])
+                zs.append(point.value[2])
+                color.append(point.label)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(xs, ys, zs, c=color)
+        plt.show()
+
+
+    """
+
+    AXES = [(0, 50, 1), (0, 50, 1)]
+    #AXES = [(0, 12, 1), (0, 12, 1), (0, 12, 1)]
     points = list(Point(np.array(pt))
                   for pt in itertools.product(*[range(*axis) for axis in AXES]))
     print len(points)
@@ -263,7 +284,7 @@ if __name__ == '__main__':
     # has enough points and is not a line? something else?
     for idx in range(4):
         space = Space(points, dist, [0 for ax in AXES])
-        partition = Partition(space, labels, temp=0.01, conv=1.0)
+        partition = Partition(space, labels, temp=0.0005, conv=1.0)
         print partition.degree_of_convexity()
 
         # TODO: clean all this up
