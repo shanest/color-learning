@@ -6,6 +6,7 @@ import colour
 from sklearn.utils.extmath import cartesian
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
 
 # TODO: DOCUMENT!
@@ -109,7 +110,14 @@ class Partition(object):
         # just if a very small number of points is generated, so we could hard-wire
         # a minimum size of each cell of the partition. (iii) has a similar origin:
         # when there are few points, they are more likely to be on a line.
-        convex_hull = scipy.spatial.ConvexHull([point.value for point in region])
+        # 'Qs' option: search until non-coplanar input is found...
+        # 'QJ' option: QHull joggles input so that it will be full dimensional.
+        # If points happen to be co-planar, this will get around it.
+        # Problem with QJ: it excludes some points from being inside their own
+        # convex hull.  This effects the degree calculations quite a bit...
+        convex_hull = scipy.spatial.ConvexHull(
+            [point.value for point in region],
+            qhull_options='QJ')
         misclassified = [point for point in all_points
                          if point_in_hull(point.value, convex_hull)
                          and point not in region]
@@ -127,9 +135,11 @@ class Partition(object):
         if len(region) < len(self.space.zero)+1:
             return 1.0
 
-        convex_hull = scipy.spatial.ConvexHull([point.value for point in region])
-        num_inside_hull = sum(int(point_in_hull(pt.value, convex_hull)) for pt in
-                              self.space.points)
+        convex_hull = scipy.spatial.ConvexHull(
+            [point.value for point in region],
+            qhull_options='QJ')
+        num_inside_hull = sum(int(point_in_hull(pt.value, convex_hull))
+                              for pt in self.space.points)
         return len(region) / num_inside_hull
 
     def degree_of_convexity(self):
@@ -189,6 +199,9 @@ class Partition(object):
             for label in sorted_labels:
                 self.convexify_region(label)
 
+        # TODO: record stats about partition here
+        # degree of convexity, size of each label, ...
+
     def _get_mislabeled(self):
 
         points = self.space.points
@@ -239,18 +252,55 @@ def distance_to_convex_hull(point, hull):
     return min(distances)
 
 
-def partition_to_img(partition):
-    img = np.zeros([AXES[0][1], AXES[1][1]])
+def partition_to_img(partition, axes):
+    img = np.zeros([axes[0][1], axes[1][1]])
     for label in partition:
         for point in partition[label]:
             img[point.value[0], point.value[1]] = label
     return img
 
 
+def generate_2D_grid(temps, convs, axis_length):
+
+    my_axes = [(0, axis_length, 1), (0, axis_length, 1)]
+    points = list(Point(np.array(pt))
+                  for pt in itertools.product(
+                      *[range(*axis) for axis in my_axes]))
+    labels = range(7)
+
+    fig, axes = plt.subplots(nrows=len(temps), ncols=len(convs))
+
+    for row in range(len(temps)):
+        for col in range(len(convs)):
+            temp = temps[row]
+            conv = convs[col]
+            print '{}, {}'.format(temp, conv)
+            space = Space(points, dist, np.zeros(2))
+            partition = Partition(space, labels, temp, conv)
+            print partition.degree_of_convexity()
+            img = partition_to_img(partition.partition, my_axes)
+            ax = axes[row, col]
+            ax.set_yticks([])
+            ax.set_xticks([])
+            ax.imshow(img, aspect='equal', cmap='Set2')
+
+    for ax, col in zip(axes[0], convs):
+        ax.set_title('c = {}'.format(col), fontsize=12)
+
+    for ax, row in zip(axes[:, 0], temps):
+        ax.set_ylabel('t = {}'.format(row), fontsize=12)
+
+    fig.tight_layout(h_pad=0.001, w_pad=0.001)
+    plt.show()
+
+
 if __name__ == '__main__':
 
+    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
+    # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 20)
+
     """
-    space = generate_CIELab_space(axis_stride=0.1)
+    space = generate_CIELab_space(axis_stride=0.075)
     print len(space.points)
     labels = range(7)
     for idx in range(4):
@@ -269,6 +319,7 @@ if __name__ == '__main__':
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(xs, ys, zs, c=color)
         plt.show()
+    """
 
 
     """
@@ -307,3 +358,4 @@ if __name__ == '__main__':
             ax = fig.add_subplot(111, projection='3d')
             ax.scatter(xs, ys, zs, c=color)
             plt.show()
+    """
