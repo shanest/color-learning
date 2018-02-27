@@ -2,10 +2,16 @@ from __future__ import division
 import itertools
 import random
 import scipy.spatial
+import colour
+from sklearn.utils.extmath import cartesian
 import numpy as np
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 # TODO: DOCUMENT!
+
+aRGB = colour.models.ADOBE_WIDE_GAMUT_RGB_COLOURSPACE
+D50 = colour.ILLUMINANTS['CIE 1931 2 Degree Standard Observer']['D50']
 
 
 class Point(object):
@@ -30,6 +36,24 @@ class Space(object):
 
     def max_dist(self, p, ls):
         return max(self.dist(p.value, p2.value) for p2 in ls)
+
+
+def RGB_to_Lab(space, pt):
+    XYZ = colour.RGB_to_XYZ(pt,
+                            space.whitepoint,
+                            D50,
+                            space.RGB_to_XYZ_matrix)
+    return colour.XYZ_to_Lab(XYZ)
+
+
+def generate_CIELab_space(rgb_space=aRGB, axis_stride=0.1):
+    # 3 axes, equal strides along each
+    axes = [np.arange(0, 1+axis_stride, axis_stride)]*3
+    rgb_points = cartesian(axes)
+    lab_points = []
+    for row in range(len(rgb_points)):
+        lab_points.append(Point(RGB_to_Lab(rgb_space, rgb_points[row, :])))
+    return Space(lab_points, dist, np.zeros(3))
 
 
 class Partition(object):
@@ -144,7 +168,7 @@ class Partition(object):
 
             # choose cell based on how close it is to the other cells
             # TODO: parameterize the f in f(min_dist(pt, label))?
-            weights = [1 / min_dist(to_add, self.partition[label])**0.25 for label in labels]
+            weights = [1 / min_dist(to_add, self.partition[label])**0.125 for label in labels]
             # weights = [1 / self.space.dist(to_add.value, self.centroids[label]) for label in labels]
             probs = softmax(weights, self.temp)
             cell = np.random.choice(labels, p=probs)
@@ -219,7 +243,7 @@ def distance_to_convex_hull(point, hull):
 
 
 def partition_to_img(partition):
-    img = np.zeros([AXIS_SIZE, AXIS_SIZE])
+    img = np.zeros([AXES[0][1], AXES[1][1]])
     for label in partition:
         for point in partition[label]:
             img[point.value[0], point.value[1]] = label
@@ -228,17 +252,37 @@ def partition_to_img(partition):
 
 if __name__ == '__main__':
 
-    AXIS_SIZE = 40
+    #AXES = [(0, 40, 1), (0, 40, 1)]
+    AXES = [(0, 12, 1), (0, 12, 1), (0, 12, 1)]
     points = list(Point(np.array(pt))
-                  for pt in itertools.product(range(AXIS_SIZE), repeat=2))
+                  for pt in itertools.product(*[range(*axis) for axis in AXES]))
+    print len(points)
     labels = range(7)
 
     # TODO: wrap generate_partition in a try block? manually ensure that each cell
     # has enough points and is not a line? something else?
     for idx in range(4):
-        space = Space(points, dist, (0, 0))
-        partition = Partition(space, labels, conv=1.0)
+        space = Space(points, dist, [0 for ax in AXES])
+        partition = Partition(space, labels, temp=0.01, conv=1.0)
         print partition.degree_of_convexity()
-        img = plt.imshow(partition_to_img(partition.partition))
-        plt.show()
-        # plt.savefig('partition_{}-n7-sm-0.01-conv-1.0.png'.format(idx))
+
+        # TODO: clean all this up
+        if len(AXES) == 2:
+            img = plt.imshow(partition_to_img(partition.partition))
+            plt.show()
+            # plt.savefig('partition_{}-n7-sm-0.01-conv-1.0.png'.format(idx))
+
+        if len(AXES) == 3:
+            xs, ys, zs, color = [], [], [], []
+            part = partition.partition
+            for label in part:
+                print len(part[label])
+                for point in part[label]:
+                    xs.append(point.value[0])
+                    ys.append(point.value[1])
+                    zs.append(point.value[2])
+                    color.append(point.label)
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(xs, ys, zs, c=color)
+            plt.show()
