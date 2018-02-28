@@ -263,6 +263,22 @@ def partition_to_img(partition, axes):
     return img
 
 
+def plot_3D_partition(partition):
+    xs, ys, zs, color = [], [], [], []
+    part = partition.partition
+    for label in part:
+        print len(part[label])
+        for point in part[label]:
+            xs.append(point.value[0])
+            ys.append(point.value[1])
+            zs.append(point.value[2])
+            color.append(point.label)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(xs, ys, zs, c=color)
+    plt.show()
+
+
 def generate_2D_grid(temps, convs, axis_length):
 
     my_axes = [(0, axis_length, 1), (0, axis_length, 1)]
@@ -303,68 +319,13 @@ def generate_2D_grid(temps, convs, axis_length):
 
 if __name__ == '__main__':
 
-    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005],
-                     [0, 0.25, 0.5, 0.75, 1.0],
-                     40)
-    # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 20)
+    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 40)
 
     """
-    space = generate_CIELab_space(axis_stride=0.075)
-    print len(space.points)
+    space = generate_CIELab_space(axis_stride=0.1)
     labels = range(7)
     for idx in range(4):
-        partition = Partition(space, labels, temp=0.0005, conv=1.0)
+        partition = Partition(space, labels, temp=0.001, conv=1.0)
         print partition.degree_of_convexity()
-        xs, ys, zs, color = [], [], [], []
-        part = partition.partition
-        for label in part:
-            print len(part[label])
-            for point in part[label]:
-                xs.append(point.value[0])
-                ys.append(point.value[1])
-                zs.append(point.value[2])
-                color.append(point.label)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(xs, ys, zs, c=color)
-        plt.show()
-    """
-
-
-    """
-
-    AXES = [(0, 50, 1), (0, 50, 1)]
-    #AXES = [(0, 12, 1), (0, 12, 1), (0, 12, 1)]
-    points = list(Point(np.array(pt))
-                  for pt in itertools.product(*[range(*axis) for axis in AXES]))
-    print len(points)
-    labels = range(7)
-
-    # TODO: wrap generate_partition in a try block? manually ensure that each cell
-    # has enough points and is not a line? something else?
-    for idx in range(4):
-        space = Space(points, dist, [0 for ax in AXES])
-        partition = Partition(space, labels, temp=0.0005, conv=1.0)
-        print partition.degree_of_convexity()
-
-        # TODO: clean all this up
-        if len(AXES) == 2:
-            img = plt.imshow(partition_to_img(partition.partition))
-            plt.show()
-            # plt.savefig('partition_{}-n7-sm-0.01-conv-1.0.png'.format(idx))
-
-        if len(AXES) == 3:
-            xs, ys, zs, color = [], [], [], []
-            part = partition.partition
-            for label in part:
-                print len(part[label])
-                for point in part[label]:
-                    xs.append(point.value[0])
-                    ys.append(point.value[1])
-                    zs.append(point.value[2])
-                    color.append(point.label)
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.scatter(xs, ys, zs, c=color)
-            plt.show()
+        plot_3D_partition(partition)
     """
