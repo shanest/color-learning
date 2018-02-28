@@ -108,16 +108,18 @@ class Partition(object):
         # process of this method.  Is there a way around this?!
         # Note: (ii) happens
         # just if a very small number of points is generated, so we could hard-wire
-        # a minimum size of each cell of the partition. (iii) has a similar origin:
+        # a minimum size of each cell of the partition.
+        # (iii) has a similar origin:
         # when there are few points, they are more likely to be on a line.
         # 'Qs' option: search until non-coplanar input is found...
         # 'QJ' option: QHull joggles input so that it will be full dimensional.
         # If points happen to be co-planar, this will get around it.
         # Problem with QJ: it excludes some points from being inside their own
         # convex hull.  This effects the degree calculations quite a bit...
+        # SOLUTION: add 'noise' to points in space, when making the space, so
+        # that it's very unlikely that any will actually be linear!
         convex_hull = scipy.spatial.ConvexHull(
-            [point.value for point in region],
-            qhull_options='QJ')
+            [point.value for point in region])
         misclassified = [point for point in all_points
                          if point_in_hull(point.value, convex_hull)
                          and point not in region]
@@ -136,8 +138,7 @@ class Partition(object):
             return 1.0
 
         convex_hull = scipy.spatial.ConvexHull(
-            [point.value for point in region],
-            qhull_options='QJ')
+            [point.value for point in region])
         num_inside_hull = sum(int(point_in_hull(pt.value, convex_hull))
                               for pt in self.space.points)
         return len(region) / num_inside_hull
@@ -256,16 +257,22 @@ def partition_to_img(partition, axes):
     img = np.zeros([axes[0][1], axes[1][1]])
     for label in partition:
         for point in partition[label]:
-            img[point.value[0], point.value[1]] = label
+            # de-noise point value
+            pt = np.around(point.value).astype(int)
+            img[pt[0], pt[1]] = label
     return img
 
 
 def generate_2D_grid(temps, convs, axis_length):
 
     my_axes = [(0, axis_length, 1), (0, axis_length, 1)]
-    points = list(Point(np.array(pt))
-                  for pt in itertools.product(
-                      *[range(*axis) for axis in my_axes]))
+    points = np.array([np.array(pt, dtype=np.float_)
+                       for pt in itertools.product(
+                           *[range(*axis) for axis in my_axes])])
+    # add noise so that co-linear points are very unlikely
+    noise = np.random.random(points.shape) * 1e-5
+    points += noise
+    points = [Point(points[row, :]) for row in range(len(points))]
     labels = range(7)
 
     fig, axes = plt.subplots(nrows=len(temps), ncols=len(convs))
@@ -296,7 +303,9 @@ def generate_2D_grid(temps, convs, axis_length):
 
 if __name__ == '__main__':
 
-    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
+    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005],
+                     [0, 0.25, 0.5, 0.75, 1.0],
+                     40)
     # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 20)
 
     """
