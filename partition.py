@@ -71,6 +71,8 @@ class Partition(object):
 
     def convexify_region(self, label):
 
+        # TODO: bug fix this!
+
         region = self.partition[label]
         all_points = self.points
         # NOTE: sometimes the iterative calls to this method result in a cell of
@@ -105,7 +107,8 @@ class Partition(object):
         if len(misclassified) > 0:
             num_to_move = int(self.conv*len(misclassified))
             misclassified.sort(
-                key=lambda point: min_dist(point, region))
+                key=lambda point: min_dist(all_points[point],
+                                           all_points[region]))
             to_move = misclassified[:num_to_move]
             for point in to_move:
                 self.relabel_point(point, label)
@@ -118,8 +121,10 @@ class Partition(object):
 
         convex_hull = scipy.spatial.ConvexHull(
             [self.points[point] for point in region])
-        num_inside_hull = sum(int(point_in_hull(pt, convex_hull))
-                              for pt in self.points)
+        num_inside_hull = sum(np.apply_along_axis(
+            lambda pt: int(point_in_hull(pt, convex_hull)),
+            axis=1,
+            arr=self.points))
         return len(region) / num_inside_hull
 
     def degree_of_convexity(self):
@@ -142,6 +147,7 @@ class Partition(object):
             unlabeled.remove(seeds[label])
             #self.assign_point(points[seeds[label]], label)
             self.assign_point(seeds[label], label)
+            # TODO: add N nearest neighbors to each seed as well...
 
         while len(unlabeled) > 0:
             # get random point
@@ -149,7 +155,7 @@ class Partition(object):
             to_add = points[new_idx]
 
             # choose cell based on how close it is to the other cells
-            dists = [min_dist(to_add, self.partition[label])
+            dists = [min_dist(to_add, points[self.partition[label]])
                      for label in labels]
 
             # TODO: parameterize the f in f(min_dist(pt, label))?
@@ -180,18 +186,6 @@ class Partition(object):
         # TODO: record stats about partition here
         # degree of convexity, size of each label, ...
 
-    def _get_mislabeled(self):
-
-        points = self.points
-        mislabeled = set()
-        for label in self.labels:
-            convex_hull = scipy.spatial.ConvexHull([point.value for point in
-                                                    self.partition[label]])
-            not_in_hull = set([point for point in points if not
-                               point_in_hull(point.value, convex_hull)])
-            mislabeled |= not_in_hull
-        return mislabeled
-
 
 # sum of squares distance
 def dist(p1, p2):
@@ -200,7 +194,7 @@ def dist(p1, p2):
 
 
 def min_dist(pt, ls):
-    return min(dist(pt, p2) for p2 in ls)
+    return np.min(scipy.spatial.distance.cdist([pt], ls))
 
 
 def width(ls):
@@ -301,8 +295,8 @@ def generate_2D_grid(temps, convs, axis_length):
 
 if __name__ == '__main__':
 
-    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0],
-                    40)
+    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
+    # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 40)
 
     """
     space = generate_CIELab_space(axis_stride=0.1)
