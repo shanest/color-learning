@@ -134,19 +134,28 @@ class Partition(object):
             # should the weights be different -- uniform? -- for this mean?
             weights=[len(partition[label]) for label in partition])
 
-    def _generate(self, init_n=5):
+    def _generate(self, init_n=125):
 
         points = self.points
         unlabeled = range(len(points))
-        # min_dist = self.space.min_dist
         labels = self.labels
+
+        # nearest neighbors tree
+        self.neighbors = scipy.spatial.cKDTree(self.points)
 
         # initialize with one seed point for each label
         seeds = random.sample(unlabeled, len(labels))
         for label in labels:
             unlabeled.remove(seeds[label])
-            #self.assign_point(points[seeds[label]], label)
             self.assign_point(seeds[label], label)
+
+            if init_n:
+                _, new_pts = self.neighbors.query(points[seeds[label]],
+                                                  init_n+1)
+                for pt in list(new_pts[1:]):
+                    if pt in unlabeled and pt not in seeds:
+                        unlabeled.remove(pt)
+                        self.assign_point(pt, label)
             # TODO: add N nearest neighbors to each seed as well...
 
         while len(unlabeled) > 0:
@@ -174,12 +183,16 @@ class Partition(object):
             print 'Convexifying...'
             # iterate through labels, starting with smallest, so that they are less
             # likely to get gobbled up in the convexify-ing process
+            """
             sorted_labels = sorted(labels,
                                    key=lambda label:
                                    self.degree_of_convexity_of_cell(label),
                                    reverse=True)
-            # sorted_labels = sorted(labels, key=lambda label:
-            #                        width(partition[label]))
+            sorted_labels = sorted(labels, key=lambda label:
+                                   width(points[self.partition[label]]))
+            """
+            sorted_labels = sorted(labels, key=lambda label:
+                                   len(self.partition[label]))
             for label in sorted_labels:
                 self.convexify_region(label)
 
@@ -198,12 +211,7 @@ def min_dist(pt, ls):
 
 
 def width(ls):
-    max_len = 0
-    for idx1 in range(len(ls)):
-        for idx2 in range(idx1, len(ls)):
-            new_dist = dist(ls[idx1].value, ls[idx2].value)
-            max_len = max_len or new_dist
-    return max_len
+    return np.max(scipy.spatial.distance.cdist(ls, ls))
 
 
 def softmax(weights, temp=1.0):
@@ -243,13 +251,15 @@ def partition_to_img(partition, axes):
 def plot_3D_partition(partition):
     xs, ys, zs, color = [], [], [], []
     part = partition.partition
+    points = partition.points
     for label in part:
         print len(part[label])
-        for point in part[label]:
-            xs.append(point.value[0])
-            ys.append(point.value[1])
-            zs.append(point.value[2])
-            color.append(point.label)
+        for pt in part[label]:
+            point = points[pt]
+            xs.append(point[0])
+            ys.append(point[1])
+            zs.append(point[2])
+            color.append(label)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(xs, ys, zs, c=color)
@@ -277,6 +287,7 @@ def generate_2D_grid(temps, convs, axis_length):
             print '{}, {}'.format(temp, conv)
             partition = Partition(points, labels, np.zeros(2), temp, conv)
             print partition.degree_of_convexity()
+            print [len(partition.partition[label]) for label in labels]
             img = partition_to_img(partition, my_axes)
             ax = axes[row, col]
             ax.set_yticks([])
@@ -299,10 +310,11 @@ if __name__ == '__main__':
     # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 40)
 
     """
-    space = generate_CIELab_space(axis_stride=0.1)
+    points = generate_CIELab_space(axis_stride=0.05)
+    print len(points)
     labels = range(7)
     for idx in range(4):
-        partition = Partition(space, labels, temp=0.001, conv=1.0)
+        partition = Partition(points, labels, np.zeros(3), temp=0.0005, conv=1.0)
         print partition.degree_of_convexity()
         plot_3D_partition(partition)
     """
