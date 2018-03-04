@@ -36,7 +36,7 @@ def generate_CIELab_space(rgb_space=aRGB, axis_stride=0.1):
 
 class Partition(object):
 
-    def __init__(self, points, labels, zero, temp=0.01, conv=1.0):
+    def __init__(self, points, labels, zero, temp=0.01, conv=1.0, init_n=100):
         self.partition = {label: [] for label in labels}
         self.centroids = {label: zero for label in labels}
         self.labelled_pts = [None]*len(points)
@@ -46,7 +46,7 @@ class Partition(object):
         self.temp = temp
         self.conv = conv
         # TODO: write to / read from file?
-        self._generate()
+        self._generate(init_n)
 
     def assign_point(self, pt, label):
         # pt.label = label
@@ -134,7 +134,7 @@ class Partition(object):
             # should the weights be different -- uniform? -- for this mean?
             weights=[len(partition[label]) for label in partition])
 
-    def _generate(self, init_n=125):
+    def _generate(self, init_n):
 
         points = self.points
         unlabeled = range(len(points))
@@ -306,15 +306,13 @@ def generate_2D_grid(temps, convs, axis_length):
 
 if __name__ == '__main__':
 
-    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
+    # generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
     # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 40)
 
-    """
-    points = generate_CIELab_space(axis_stride=0.05)
+    points = generate_CIELab_space(axis_stride=0.075)
     print len(points)
     labels = range(7)
     for idx in range(4):
-        partition = Partition(points, labels, np.zeros(3), temp=0.0005, conv=1.0)
+        partition = Partition(points, labels, np.zeros(3), temp=0.001, conv=1.0)
         print partition.degree_of_convexity()
         plot_3D_partition(partition)
-    """
