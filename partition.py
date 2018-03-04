@@ -1,3 +1,20 @@
+"""
+Copyright (C) 2018 Shane Steinert-Threlkeld
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+"""
+
 from __future__ import division
 import itertools
 import random
@@ -36,11 +53,12 @@ def generate_CIELab_space(rgb_space=aRGB, axis_stride=0.1):
 
 class Partition(object):
 
-    def __init__(self, points, labels, zero, temp=0.01, conv=1.0, init_n=100):
-        self.partition = {label: [] for label in labels}
-        self.centroids = {label: zero for label in labels}
+    def __init__(self, points, num_labels, zero,
+                 temp=0.01, conv=1.0, init_n=100):
+        self.labels = range(num_labels)
+        self.partition = {label: [] for label in self.labels}
+        self.centroids = {label: zero for label in self.labels}
         self.labelled_pts = [None]*len(points)
-        self.labels = labels
         self.points = points
         self.zero = zero
         self.temp = temp
