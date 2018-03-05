@@ -109,13 +109,11 @@ def main_experiment(out_dir):
     # set possible trial parameters
     temps = [5, 1, 0.1, 0.01, 0.001, 0.0005]
     convs = [0, 0.25, 0.5, 0.75, 1.0]
-    temps = [0.001]
-    convs = [0.75, 1.0]
     num_labels = [7]
-    num_epochs = [5]
+    num_epochs = [6]
 
     # how many trials per parameter combination to run
-    trials_per_params = 1
+    trials_per_params = 20
 
     # get list of all parameters
     params_tuples = (list(
@@ -125,7 +123,7 @@ def main_experiment(out_dir):
     tuple_labels = ['temp', 'conv', 'num_labels', 'num_epochs']
 
     # global parameters
-    axis_stride = 0.075
+    axis_stride = 0.05
     lab_points = partition.generate_CIELab_space(axis_stride=axis_stride)
 
     trials_dicts = []
@@ -143,4 +141,4 @@ def main_experiment(out_dir):
 
 
 if __name__ == '__main__':
-    main_experiment('data/')
+    main_experiment('./')
