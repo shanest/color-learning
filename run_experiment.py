@@ -100,6 +100,8 @@ def run_trial(params, out_dir):
     trial_results['degree_of_convexity'] = the_partition.degree_of_convexity()
     trial_results.update(
         estimator.evaluate(test_input_fn))
+    trial_results.update(
+        {'cell{}_size'.format(label): len(part[label]) for label in part})
     print(trial_results)
     return trial_results
 
