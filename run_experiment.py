@@ -20,6 +20,7 @@ import itertools
 
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 
 import partition
 
@@ -46,7 +47,7 @@ def run_trial(params, out_dir):
                   label in part}
     test_bins = {label: part[label][int(train_split*len(part[label])):] for
                  label in part}
-    # oversample
+    # oversample from all but biggest bins
     max_train_bin = max(len(train_bins[label]) for label in train_bins)
     train_bins = {label: np.random.choice(train_bins[label], max_train_bin,
                                           replace=True)
@@ -73,7 +74,7 @@ def run_trial(params, out_dir):
         num_epochs=1,
         batch_size=len(test_x),
         shuffle=False)
-    # tf dnnclassifier? or custom?
+
     # TODO: vary network by trial or not?
     network_params = {
         'hidden_units': [12, 12],
@@ -84,8 +85,6 @@ def run_trial(params, out_dir):
 
     point_column = tf.feature_column.numeric_column(column_name,
                                                     shape=(input_size,))
-    print(params)
-    print(the_partition.degree_of_convexity())
     estimator = tf.estimator.DNNClassifier(
         hidden_units=network_params['hidden_units'],
         feature_columns=[point_column],
@@ -94,7 +93,15 @@ def run_trial(params, out_dir):
         activation_fn=network_params['activation'],
         optimizer=network_params['optimizer'])
     estimator.train(train_input_fn)
-    print(estimator.evaluate(test_input_fn))
+
+    trial_results = dict(params)
+    del trial_results['points']
+    # TODO: record all info desired!
+    trial_results['degree_of_convexity'] = the_partition.degree_of_convexity()
+    trial_results.update(
+        estimator.evaluate(test_input_fn))
+    print(trial_results)
+    return trial_results
 
 
 def main_experiment(out_dir):
@@ -121,11 +128,18 @@ def main_experiment(out_dir):
     axis_stride = 0.075
     lab_points = partition.generate_CIELab_space(axis_stride=axis_stride)
 
+    trials_dicts = []
+
     # run the trials!
     for trial_tup in params_tuples:
         params = dict(zip(tuple_labels, trial_tup))
         params['points'] = lab_points
-        run_trial(params, out_dir)
+        trials_dicts.append(
+            run_trial(params, out_dir))
+
+    trials_frame = pd.DataFrame(trials_dicts)
+    trials_frame.to_csv(out_dir + 'results.csv')
+    return trials_frame
 
 
 if __name__ == '__main__':
