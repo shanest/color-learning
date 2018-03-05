@@ -21,6 +21,7 @@ import itertools
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+from tqdm import tqdm
 
 import partition
 
@@ -51,7 +52,7 @@ def run_trial(params, out_dir):
     max_train_bin = max(len(train_bins[label]) for label in train_bins)
     train_bins = {label: np.random.choice(train_bins[label], max_train_bin,
                                           replace=True)
-                  if len(train_bins[label]) < max_train_bin else
+                  if 0 < len(train_bins[label]) < max_train_bin else
                   train_bins[label] for label in train_bins}
 
     def from_bins_to_xy(bins):
@@ -125,13 +126,13 @@ def main_experiment(out_dir):
     tuple_labels = ['temp', 'conv', 'num_labels', 'num_epochs']
 
     # global parameters
-    axis_stride = 0.05
+    axis_stride = 0.075
     lab_points = partition.generate_CIELab_space(axis_stride=axis_stride)
 
     trials_dicts = []
 
     # run the trials!
-    for trial_tup in params_tuples:
+    for trial_tup in tqdm(params_tuples):
         params = dict(zip(tuple_labels, trial_tup))
         params['points'] = lab_points
         trials_dicts.append(
