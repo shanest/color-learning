@@ -17,10 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from __future__ import print_function, division
 import itertools
+import os
 
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+import psutil
 from tqdm import tqdm
 
 import partition
@@ -104,6 +106,7 @@ def run_trial(params, out_dir):
     trial_results.update(
         {'cell{}_size'.format(label): len(part[label]) for label in part})
     print(trial_results)
+
     return trial_results
 
 
@@ -126,7 +129,7 @@ def main_experiment(out_dir):
     tuple_labels = ['temp', 'conv', 'num_labels', 'num_epochs']
 
     # global parameters
-    axis_stride = 0.075
+    axis_stride = 0.05
     lab_points = partition.generate_CIELab_space(axis_stride=axis_stride)
 
     trials_dicts = []
@@ -137,6 +140,11 @@ def main_experiment(out_dir):
         params['points'] = lab_points
         trials_dicts.append(
             run_trial(params, out_dir))
+        # close files opened by that trial; otherwise, can wind up opening too
+        # many files per experiment
+        proc = psutil.Process()
+        for handler in proc.open_files():
+            os.close(handler.fd)
 
     trials_frame = pd.DataFrame(trials_dicts)
     trials_frame.to_csv(out_dir + 'results.csv')
