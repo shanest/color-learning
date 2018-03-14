@@ -27,6 +27,8 @@ from tqdm import tqdm
 
 import partition
 
+# TODO: document, incl ulimit -n
+
 
 def run_trial(params, out_dir):
 
@@ -35,10 +37,6 @@ def run_trial(params, out_dir):
     output_size = params['num_labels']
     column_name = 'point'
 
-    # TODO: prep input: (i) split bins into train/test, (ii) oversample
-    # training bins, (iii) make into feature column
-    # note: partition.labelled_pts will no longer be true labels for training
-    # data, only for test
     the_partition = partition.Partition(params['points'], params['num_labels'],
                                         np.zeros(input_size), params['temp'],
                                         params['conv'])
@@ -50,7 +48,10 @@ def run_trial(params, out_dir):
                   label in part}
     test_bins = {label: part[label][int(train_split*len(part[label])):] for
                  label in part}
+
     # oversample from all but biggest bins
+    # note: partition.labelled_pts will no longer be true labels for training
+    # data, only for test
     max_train_bin = max(len(train_bins[label]) for label in train_bins)
     train_bins = {label: np.random.choice(train_bins[label], max_train_bin,
                                           replace=True)
@@ -59,7 +60,10 @@ def run_trial(params, out_dir):
 
     def from_bins_to_xy(bins):
         x = np.vstack([points[bins[label]] for label in bins])
-        y = np.concatenate([[label]*len(bins[label]) for label in bins])
+        # TODO: why does this sometimes return floats, and therefore require
+        # the astype(int)?
+        y = np.concatenate([[label]*len(bins[label]) for label in
+                            bins]).astype(int)
         return x, y
 
     train_x, train_y = from_bins_to_xy(train_bins)
@@ -119,7 +123,7 @@ def main_experiment(out_dir):
     num_epochs = [6]
 
     # how many trials per parameter combination to run
-    trials_per_params = 20
+    trials_per_params = 10
 
     # get list of all parameters
     params_tuples = (list(
