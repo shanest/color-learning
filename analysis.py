@@ -21,6 +21,7 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 import seaborn as sns
 import matplotlib.pyplot as plt
+from plotnine import *
 
 
 def analyze_results(filename):
@@ -46,6 +47,13 @@ def analyze_results(filename):
     plt.xlim((0,1))
     plt.ylim((0,1))
     plt.show()
+    # ggplot version
+    data['temp'] = data['temp'].astype('category')
+    data['conv'] = data['conv'].astype('category')
+    print(ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
+          + geom_point(aes(colour='temp', fill='conv'), size=2.5)
+          + geom_smooth(method='lm', colour='orange')
+          + xlim((0, 1)) + ylim((0, 1)))
 
     # variables of interest
     variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
