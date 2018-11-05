@@ -43,6 +43,8 @@ def analyze_results(filename):
     # joint plot with regression
     sns.set_palette('colorblind')
     sns.jointplot(x='degree_of_convexity', y='accuracy', data=data, kind='reg')
+    plt.xlim((0,1))
+    plt.ylim((0,1))
     plt.show()
 
     # variables of interest
@@ -78,54 +80,6 @@ def analyze_results(filename):
         r2_diffs[variable] = full_r2 - all_but_this_results.rsquared
 
     print(r2_diffs)
-
-    """
-    # linear regression
-    stat_model = smf.ols(
-            formula=('accuracy ~ degree_of_convexity'),
-            data=data)
-    results = stat_model.fit()
-    print(results.summary())
-
-    stat_model = smf.ols(
-            formula=('accuracy ~ degree_of_convexity + max_cell_size'),
-            data=data)
-    results = stat_model.fit()
-    print(results.summary())
-    print(results.f_test('max_cell_size = 0'))
-
-    stat_model = smf.ols(
-        formula=('accuracy ~ degree_of_convexity + degree_of_convexity:max_cell_size'),
-            data=data)
-    results = stat_model.fit()
-    print(results.summary())
-    print(results.f_test('degree_of_convexity:max_cell_size = 0'))
-
-    stat_model = smf.ols(
-            formula=('accuracy ~ degree_of_convexity + max_cell_size +'
-                'degree_of_convexity:max_cell_size'),
-            data=data)
-    results = stat_model.fit()
-    print(results.summary())
-    print(results.pvalues)
-    print(results.f_test('max_cell_size = 0, degree_of_convexity:max_cell_size=0'))
-    print(results.f_test('max_cell_size = 0'))
-
-    plt.plot(data.degree_of_convexity, data.accuracy, 'o')
-    plt.show()
-    sm.graphics.plot_fit(results, 'degree_of_convexity')
-    plt.show()
-    sm.graphics.plot_regress_exog(results, 'degree_of_convexity')
-    plt.show()
-    """
-
-    # TODO: other models, plots
-    """
-    sm.graphics.plot_partregress('accuracy', 'degree_of_convexity',
-            ['max_cell_size', 'degree_of_convexity:max_cell_size'],
-            data=data)
-    plt.show()
-    """
 
 
 if __name__ == '__main__':
