@@ -53,6 +53,8 @@ def analyze_results(filename):
     print(ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
           + geom_point(aes(colour='temp', fill='conv'), size=2.5)
           + geom_smooth(method='lm', colour='orange')
+          + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
+                     x=0.2, y=0.9, size=8)
           + xlim((0, 1)) + ylim((0, 1)))
 
     # variables of interest
