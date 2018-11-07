@@ -49,9 +49,9 @@ def analyze_results(filename):
     plt.show()
     # ggplot version
     data['temp'] = data['temp'].astype('category')
-    data['conv'] = data['conv'].astype('category')
+    data['conn'] = data['conv'].astype('category')
     print(ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
-          + geom_point(aes(colour='temp', fill='conv'), size=2.5)
+          + geom_point(aes(colour='temp', fill='conn'), size=2.5)
           + geom_smooth(method='lm', colour='orange')
           + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
                      x=0.2, y=0.9, size=8)
