@@ -54,7 +54,8 @@ def analyze_results(filename):
           + geom_point(aes(colour='temp', fill='conn'), size=2.5)
           + geom_smooth(method='lm', colour='orange')
           + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
-                     x=0.2, y=0.9, size=8)
+                     x=0.2, y=0.9, size=14)
+          + xlab('degree of convexity')
           + xlim((0, 1)) + ylim((0, 1)))
 
     # variables of interest
