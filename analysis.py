@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from plotnine import *
 
 
-def analyze_results(filename):
+def analyze_results(filename, fig_file=None):
 
     data = pd.read_csv(filename)
     # add a column of data for largest cell
@@ -50,13 +50,17 @@ def analyze_results(filename):
     # ggplot version
     data['temp'] = data['temp'].astype('category')
     data['conn'] = data['conv'].astype('category')
-    print(ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
-          + geom_point(aes(colour='temp', fill='conn'), size=2.5)
-          + geom_smooth(method='lm', colour='orange')
-          + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
-                     x=0.2, y=0.9, size=14)
-          + xlab('degree of convexity')
-          + xlim((0, 1)) + ylim((0, 1)))
+    plot = (ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
+            + geom_point(aes(colour='temp', fill='conn'), size=2.5)
+            + geom_smooth(method='lm', colour='orange')
+            + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
+                       x=0.2, y=0.9, size=14)
+            + xlab('degree of convexity')
+            + xlim((0, 1)) + ylim((0, 1)))
+    if fig_file:
+        plot.save(fig_file, width=18, height=12)
+    else:
+        print(plot)
 
     # variables of interest
     variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
@@ -94,4 +98,4 @@ def analyze_results(filename):
 
 
 if __name__ == '__main__':
-    analyze_results('results.csv')
+    analyze_results('results.csv', fig_file='complex_regression.png')
