@@ -80,7 +80,21 @@ def run_trial(params, out_dir):
         batch_size=len(test_x),
         shuffle=False)
 
-    # TODO: vary network by trial or not?
+    total_x, total_y = from_bins_to_xy(part)
+    total_input_train = tf.estimator.inputs.numpy_input_fn(
+        x={column_name: total_x},
+        y=total_y,
+        batch_size=32,
+        num_epochs=params['num_epochs'],
+        shuffle=True)
+    total_input_test = tf.estimator.inputs.numpy_input_fn(
+        x={column_name: total_x},
+        y=total_y,
+        batch_size=len(total_x),
+        num_epochs=1,
+        shuffle=False)
+
+    # main network training
     network_params = {
         'hidden_units': [32, 32],
         'activation': tf.nn.relu,
@@ -99,6 +113,15 @@ def run_trial(params, out_dir):
         optimizer=network_params['optimizer'])
     estimator.train(train_input_fn)
 
+    # linear model for measuring degree of separability
+    linear_model = tf.estimator.LinearClassifier(
+        feature_columns=[point_column],
+        n_classes=output_size)
+    linear_model.train(total_input_train)
+    linear_results = linear_model.evaluate(total_input_test)
+    linear_results = {'linear_' + key: linear_results[key]
+                      for key in linear_results}
+
     trial_results = dict(params)
     del trial_results['points']
     # TODO: record all info desired!
@@ -107,6 +130,7 @@ def run_trial(params, out_dir):
         estimator.evaluate(test_input_fn))
     trial_results.update(
         {'cell{}_size'.format(label): len(part[label]) for label in part})
+    trial_results.update(linear_results)
     print(trial_results)
 
     return trial_results
