@@ -132,6 +132,8 @@ def run_trial(params, out_dir):
         {'cell{}_size'.format(label): len(part[label]) for label in part})
     trial_results.update(linear_results)
     print(trial_results)
+    trial_results.update(
+        {'cell_{}'.format(label): part[label] for label in part})
 
     return trial_results
 
