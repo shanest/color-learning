@@ -33,20 +33,22 @@ def analyze_results(filename, fig_file=None):
     data['min_cell_size'] = data[[column for column in list(data) if 'size' in
         column]].min(axis=1)
     data['max_minus_min'] = data['max_cell_size'] - data['min_cell_size']
-    data['max_over_min'] = data['max_cell_size'] / data['min_cell_size']
+    data['min_over_max'] = data['min_cell_size'] / data['max_cell_size']
     data['median_size'] = data[[column for column in list(data) if 'size' in
         column]].median(axis=1)
     data['temp:conv'] = data['temp'] * data['conv']
 
     # correlations
-    print(data.corr())
+    print(data.corr()['degree_of_convexity'])
 
+    """
     # joint plot with regression
     sns.set_palette('colorblind')
     sns.jointplot(x='degree_of_convexity', y='accuracy', data=data, kind='reg')
     plt.xlim((0,1))
     plt.ylim((0,1))
     plt.show()
+    """
     # ggplot version
     data['temp'] = data['temp'].astype('category')
     data['conn'] = data['conv'].astype('category')
@@ -64,8 +66,9 @@ def analyze_results(filename, fig_file=None):
 
     # variables of interest
     variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
-                 'min_cell_size', 'max_minus_min', 'max_over_min',
-                 'median_size', 'temp:conv']
+                 'min_cell_size', 'max_minus_min', 'min_over_max',
+                 'median_size', 'temp:conv', 'linear_accuracy']
+    print(data[variables])
 
     # regress all variables
     add_string = ' + '.join(variables)
@@ -98,4 +101,4 @@ def analyze_results(filename, fig_file=None):
 
 
 if __name__ == '__main__':
-    analyze_results('results.csv', fig_file='complex_regression.png')
+    analyze_results('trial/results.csv', fig_file='trial/complex_regression.png')
