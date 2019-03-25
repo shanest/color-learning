@@ -54,17 +54,19 @@ def generate_CIELab_space(rgb_space=aRGB, axis_stride=0.1):
 class Partition(object):
 
     def __init__(self, points, num_labels, zero,
-                 temp=0.01, conv=1.0, init_n=100):
+                 temp=0.01, conv=1.0, init_n=100, generate=True):
         self.labels = range(num_labels)
         self.partition = {label: [] for label in self.labels}
         self.centroids = {label: zero for label in self.labels}
         self.labelled_pts = [None]*len(points)
         self.points = points
         self.zero = zero
-        self.temp = temp
-        self.conv = conv
         # TODO: write to / read from file?
-        self._generate(init_n)
+        if generate:
+            self.temp = temp
+            self.conv = conv
+            self.init_n = init_n
+            self._generate(init_n)
 
     def assign_point(self, pt, label):
         # pt.label = label
@@ -174,7 +176,6 @@ class Partition(object):
                     if pt in unlabeled and pt not in seeds:
                         unlabeled.remove(pt)
                         self.assign_point(pt, label)
-            # TODO: add N nearest neighbors to each seed as well...
 
         while len(unlabeled) > 0:
             # get random point

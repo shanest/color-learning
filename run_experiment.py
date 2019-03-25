@@ -27,8 +27,6 @@ from tqdm import tqdm
 
 import partition
 
-# TODO: document, incl ulimit -n
-
 
 def run_trial(params, out_dir):
 
@@ -84,8 +82,8 @@ def run_trial(params, out_dir):
 
     # TODO: vary network by trial or not?
     network_params = {
-        'hidden_units': [12, 12],
-        'activation': tf.nn.elu,
+        'hidden_units': [32, 32],
+        'activation': tf.nn.relu,
         'optimizer': tf.train.AdamOptimizer(),
         'model_dir': out_dir
     }
@@ -116,6 +114,9 @@ def run_trial(params, out_dir):
 
 def main_experiment(out_dir):
 
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
     # set possible trial parameters
     temps = [5, 1, 0.1, 0.01, 0.001, 0.0005]
     convs = [0, 0.25, 0.5, 0.75, 1.0]
@@ -135,6 +136,7 @@ def main_experiment(out_dir):
     # global parameters
     axis_stride = 0.05
     lab_points = partition.generate_CIELab_space(axis_stride=axis_stride)
+    np.save(out_dir + 'points.npy', lab_points)
 
     trials_dicts = []
 
@@ -156,4 +158,4 @@ def main_experiment(out_dir):
 
 
 if __name__ == '__main__':
-    main_experiment('./')
+    main_experiment('./trial/')
