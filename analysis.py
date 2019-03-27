@@ -55,7 +55,7 @@ def analyze_results(filename, fig_file=None):
     plot = (ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
             + geom_point(aes(colour='temp', fill='conn'), size=2.5)
             + geom_smooth(method='lm', colour='orange')
-            + annotate('label', label='Pearson R: 0.71; p=3.1e-47',
+            + annotate('label', label='Pearson R: 0.711; p=1.9e-47',
                        x=0.2, y=0.9, size=14)
             + xlab('degree of convexity')
             + xlim((0, 1)) + ylim((0, 1)))
@@ -78,6 +78,7 @@ def analyze_results(filename, fig_file=None):
     full_results = full_model.fit()
     full_r2 = full_results.rsquared
     print(full_results.summary())
+    print(full_results.pvalues)
 
     r2_diffs = {}
     for variable in variables:
@@ -101,4 +102,4 @@ def analyze_results(filename, fig_file=None):
 
 
 if __name__ == '__main__':
-    analyze_results('trial/results.csv', fig_file='trial/complex_regression.png')
+    analyze_results('data/results.csv', fig_file='data/complex_regression.png')
