@@ -17,10 +17,14 @@ data$mean_size <- apply(
 # data <- data[c('degree_of_convexity', 'accuracy')]
 D = Mclust(data[c('degree_of_convexity', 'accuracy')],G=1:20)
 summary(D)
+png('clusters.png', width=12, height=9, units='in', res=300)
 plot(D, what="classification")
+dev.off()
 
 BIC <- mclustBIC(data)
+png('cluster_BIC.png', width=12, height=9, units='in', res=300)
 plot(BIC)
+dev.off()
 summary(BIC)
 
 library(ggplot2)
