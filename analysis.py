@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from plotnine import *
 
 
-def analyze_results(filename, fig_file=None):
+def analyze_results(filename, variables, fig_file=None):
 
     data = pd.read_csv(filename)
     # add a column of data for largest cell
@@ -41,14 +41,6 @@ def analyze_results(filename, fig_file=None):
     # correlations
     print(data.corr()['degree_of_convexity'])
 
-    """
-    # joint plot with regression
-    sns.set_palette('colorblind')
-    sns.jointplot(x='degree_of_convexity', y='accuracy', data=data, kind='reg')
-    plt.xlim((0,1))
-    plt.ylim((0,1))
-    plt.show()
-    """
     # ggplot version
     data['temp'] = data['temp'].astype('category')
     data['conn'] = data['conv'].astype('category')
@@ -63,12 +55,6 @@ def analyze_results(filename, fig_file=None):
         plot.save(fig_file, width=18, height=12)
     else:
         print(plot)
-
-    # variables of interest
-    variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
-                 'min_cell_size', 'max_minus_min', 'min_over_max',
-                 'median_size', 'temp:conv', 'linear_accuracy']
-    print(data[variables])
 
     # regress all variables
     add_string = ' + '.join(variables)
@@ -102,4 +88,9 @@ def analyze_results(filename, fig_file=None):
 
 
 if __name__ == '__main__':
-    analyze_results('data/results.csv', fig_file='data/complex_regression.png')
+    variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
+                 'min_cell_size', 'max_minus_min', 'min_over_max',
+                 'median_size', 'temp:conv']
+    analyze_results('data/results.csv', variables, fig_file='data/complex_regression.png')
+    print('\n\n\nWITH LINEAR SEPARABILITY\n\n\n')
+    analyze_results('data/results.csv', variables + ['linear_accuracy'], fig_file='data/complex_regression.png')
