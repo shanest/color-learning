@@ -27,6 +27,7 @@ plot(BIC)
 dev.off()
 summary(BIC)
 
+
 library(ggplot2)
 library(viridis)
 
@@ -44,3 +45,6 @@ ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, 
 ggsave('clusters_median.png', units='in', width=18, height=12)
 ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=mean_size)) + scale_colour_viridis()
 
+no_bad_cluster <- data[which(data$cluster != 3), ]
+regress <- lm(accuracy ~ degree_of_convexity, data=no_bad_cluster)
+summary(regress)
