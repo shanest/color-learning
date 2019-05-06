@@ -23,6 +23,8 @@ will run the main experiment reported in the paper.  In the output directory `tr
 
 To see how an experiment is defined and to play with defining your own, you can check out the [`main_experiment`](https://github.com/shanest/color-learning/blob/master/run_experiment.py#L141) method, which itself repeatedly calls [`run_trial`](https://github.com/shanest/color-learning/blob/master/run_experiment.py#L31).
 
+The algorithm for generating artificial color naming systems (and some utility methods for it) are in `partition.py`.
+
 ## Analyzing the Data
 
 The regression and commonality analysis reported can be run via
