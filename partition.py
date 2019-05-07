@@ -295,7 +295,8 @@ def generate_2D_grid(temps, convs, axis_length):
     noise = np.random.random(points.shape) * 1e-5
     points += noise
     # points = [Point(points[row, :]) for row in range(len(points))]
-    labels = range(7)
+    num_labels = 7
+    labels = range(num_labels)
 
     fig, axes = plt.subplots(nrows=len(temps), ncols=len(convs))
 
@@ -304,7 +305,7 @@ def generate_2D_grid(temps, convs, axis_length):
             temp = temps[row]
             conv = convs[col]
             print '{}, {}'.format(temp, conv)
-            partition = Partition(points, labels, np.zeros(2), temp, conv)
+            partition = Partition(points, num_labels, np.zeros(2), temp, conv)
             print partition.degree_of_convexity()
             print [len(partition.partition[label]) for label in labels]
             img = partition_to_img(partition, my_axes)
@@ -314,10 +315,10 @@ def generate_2D_grid(temps, convs, axis_length):
             ax.imshow(img, aspect='equal', cmap='Set2')
 
     for ax, col in zip(axes[0], convs):
-        ax.set_title('c = {}'.format(col), fontsize=12)
+        ax.set_title('s = {}'.format(col), fontsize=12)
 
     for ax, row in zip(axes[:, 0], temps):
-        ax.set_ylabel('t = {}'.format(row), fontsize=12)
+        ax.set_ylabel('c = {}'.format(row), fontsize=12)
 
     fig.tight_layout(h_pad=0.001, w_pad=0.001)
     plt.show()
@@ -325,13 +326,13 @@ def generate_2D_grid(temps, convs, axis_length):
 
 if __name__ == '__main__':
 
-    # generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
+    generate_2D_grid([1, 0.1, 0.01, 0.001, 0.0005], [0, 0.25, 0.5, 0.75, 1.0], 50)
     # generate_2D_grid([0.001, 0.0005], [0.75, 1.0], 40)
 
     points = generate_CIELab_space(axis_stride=0.075)
     print len(points)
-    labels = range(7)
+    num_labels = 7
     for idx in range(4):
-        partition = Partition(points, labels, np.zeros(3), temp=0.001, conv=1.0)
+        partition = Partition(points, num_labels, np.zeros(3), temp=0.001, conv=1.0)
         print partition.degree_of_convexity()
         plot_3D_partition(partition)
