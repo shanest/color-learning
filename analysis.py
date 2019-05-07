@@ -36,16 +36,16 @@ def analyze_results(filename, variables, fig_file=None):
     data['min_over_max'] = data['min_cell_size'] / data['max_cell_size']
     data['median_size'] = data[[column for column in list(data) if 'size' in
         column]].median(axis=1)
-    data['temp:conv'] = data['temp'] * data['conv']
+    data['smooth*conn'] = data['smooth'] * data['conn']
 
     # correlations
     print(data.corr()['degree_of_convexity'])
 
     # ggplot version
-    data['temp'] = data['temp'].astype('category')
-    data['conn'] = data['conv'].astype('category')
+    data['smooth'] = data['smooth'].astype('category')
+    data['conn'] = data['conn'].astype('category')
     plot = (ggplot(data, aes(x='degree_of_convexity', y='accuracy'))
-            + geom_point(aes(colour='temp', fill='conn'), size=2.5)
+            + geom_point(aes(colour='conn', fill='smooth'), size=2.5)
             + geom_smooth(method='lm', colour='orange')
             + annotate('label', label='Pearson R: 0.711; p=1.9e-47',
                        x=0.2, y=0.9, size=14)
@@ -88,9 +88,9 @@ def analyze_results(filename, variables, fig_file=None):
 
 
 if __name__ == '__main__':
-    variables = ['degree_of_convexity', 'temp', 'conv', 'max_cell_size',
+    variables = ['degree_of_convexity', 'smooth', 'conn', 'max_cell_size',
                  'min_cell_size', 'max_minus_min', 'min_over_max',
-                 'median_size', 'temp:conv']
+                 'median_size', 'smooth*conn']
     analyze_results('data/results.csv', variables, fig_file='data/complex_regression.png')
     print('\n\n\nWITH LINEAR SEPARABILITY\n\n\n')
     analyze_results('data/results.csv', variables + ['linear_accuracy'], fig_file='data/complex_regression.png')

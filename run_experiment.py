@@ -157,7 +157,7 @@ def main_experiment(out_dir):
         itertools.product(temps, convs, num_labels, num_epochs)
     )*trials_per_params)
 
-    tuple_labels = ['temp', 'conv', 'num_labels', 'num_epochs']
+    tuple_labels = ['smooth', 'conn', 'num_labels', 'num_epochs']
 
     # global parameters
     axis_stride = 0.05
@@ -174,6 +174,7 @@ def main_experiment(out_dir):
             run_trial(params, out_dir))
         # close files opened by that trial; otherwise, can wind up opening too
         # many files per experiment
+        # TODO: still need ulimit -n, even with closing?
         proc = psutil.Process()
         for handler in proc.open_files():
             os.close(handler.fd)
