@@ -41,8 +41,8 @@ ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, 
 ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=min_size)) + scale_colour_viridis()
 ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=max_size)) + scale_colour_viridis()
 ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=max_over_min)) + scale_colour_viridis()
-ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=median_size)) + scale_colour_viridis()
-ggsave('clusters_median.png', units='in', width=18, height=12)
+ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=median_size)) + scale_colour_viridis() + ggtitle('Optimal clustering of accuracy data') + theme(plot.title = element_text(hjust = 0.5))
+ggsave('clusters_median.png', units='in', width=12, height=8)
 ggplot(data) + geom_point(aes(x=degree_of_convexity, y=accuracy, shape=cluster, colour=mean_size)) + scale_colour_viridis()
 
 no_bad_cluster <- data[which(data$cluster != 3), ]

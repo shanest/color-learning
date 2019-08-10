@@ -49,10 +49,11 @@ def analyze_results(filename, variables, fig_file=None):
             + geom_smooth(method='lm', colour='orange')
             + annotate('label', label='Pearson R: 0.711; p=1.9e-47',
                        x=0.2, y=0.9, size=14)
+            + ggtitle('Accuracy on test set as a function of degree of convexity')
             + xlab('degree of convexity')
             + xlim((0, 1)) + ylim((0, 1)))
     if fig_file:
-        plot.save(fig_file, width=18, height=12)
+        plot.save(fig_file, width=12, height=8)
     else:
         print(plot)
 
